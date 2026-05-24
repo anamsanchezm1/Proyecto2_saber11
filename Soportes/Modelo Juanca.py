@@ -11,3 +11,6 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Dropout
 from tensorflow.keras.callbacks import EarlyStopping
+
+ruta = "/Users/juancamilohernandezjacobo/Desktop/saber11_limpio_base.csv"
+df = pd.read_csv(ruta)
