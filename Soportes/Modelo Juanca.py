@@ -8,6 +8,7 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Dropout
 from tensorflow.keras.callbacks import EarlyStopping
+from sklearn.linear_model import LinearRegression
 
 ruta = "/Users/juancamilohernandezjacobo/Desktop/saber11_limpio_base.csv"
 df = pd.read_csv(ruta)
@@ -58,3 +59,21 @@ if hasattr(X_train_procesado, "toarray"):
 
 if hasattr(X_test_procesado, "toarray"):
     X_test_procesado = X_test_procesado.toarray()
+
+
+modelo = LinearRegression()
+
+modelo.fit(X_train_procesado, y_train)
+
+y_pred = modelo.predict(X_test_procesado)
+
+mae = mean_absolute_error(y_test, y_pred)
+mse = mean_squared_error(y_test, y_pred)
+rmse = np.sqrt(mse)
+r2 = r2_score(y_test, y_pred)
+
+print("Resultados del modelo de regresión lineal")
+print("MAE:", mae)
+print("MSE:", mse)
+print("RMSE:", rmse)
+print("R2:", r2)
