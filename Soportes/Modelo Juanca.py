@@ -14,3 +14,24 @@ from tensorflow.keras.callbacks import EarlyStopping
 
 ruta = "/Users/juancamilohernandezjacobo/Desktop/saber11_limpio_base.csv"
 df = pd.read_csv(ruta)
+
+X = [
+    "periodo",
+    "cole_area_ubicacion",
+    "cole_naturaleza",
+    "cole_calendario",
+    "cole_jornada",
+    "cole_caracter",
+    "cole_bilingue",
+    "cole_genero"
+]
+
+y = "punt_global"
+
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X,
+    y,
+    test_size=0.2,
+    random_state=42
+)
