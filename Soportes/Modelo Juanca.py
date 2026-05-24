@@ -61,11 +61,27 @@ if hasattr(X_test_procesado, "toarray"):
     X_test_procesado = X_test_procesado.toarray()
 
 
-modelo = LinearRegression()
+modelo = Sequential()
 
-modelo.fit(X_train_procesado, y_train)
+modelo.add(Dense(64, activation="relu", input_shape=(X_train_procesado.shape[1],)))
+modelo.add(Dense(32, activation="relu"))
+modelo.add(Dense(1))  # salida de regresión
 
-y_pred = modelo.predict(X_test_procesado)
+modelo.compile(
+    optimizer="adam",
+    loss="mse",
+    metrics=["mae"]
+)
+
+modelo.fit(
+    X_train_procesado,
+    y_train,
+    epochs=100,
+    batch_size=32,
+    validation_split=0.2
+)
+
+y_pred = modelo.predict(X_test_procesado).flatten()
 
 mae = mean_absolute_error(y_test, y_pred)
 mse = mean_squared_error(y_test, y_pred)
@@ -77,12 +93,3 @@ print("MAE:", mae)
 print("MSE:", mse)
 print("RMSE:", rmse)
 print("R2:", r2)
-
-nombres_variables = preprocesador.get_feature_names_out()
-
-coeficientes = pd.DataFrame({
-    "Variable": nombres_variables,
-    "Coeficiente": modelo.coef_
-})
-
-print(coeficientes)
