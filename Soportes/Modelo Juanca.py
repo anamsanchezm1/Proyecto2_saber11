@@ -77,3 +77,12 @@ print("MAE:", mae)
 print("MSE:", mse)
 print("RMSE:", rmse)
 print("R2:", r2)
+
+nombres_variables = preprocesador.get_feature_names_out()
+
+coeficientes = pd.DataFrame({
+    "Variable": nombres_variables,
+    "Coeficiente": modelo.coef_
+})
+
+print(coeficientes)
