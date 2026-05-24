@@ -63,7 +63,8 @@ if hasattr(X_test_procesado, "toarray"):
 
 modelo = Sequential()
 
-modelo.add(Dense(64, activation="relu", input_shape=(X_train_procesado.shape[1],)))
+modelo.add(Dense(128, activation="relu", input_shape=(X_train_procesado.shape[1],)))
+modelo.add(Dense(64, activation="relu"))
 modelo.add(Dense(32, activation="relu"))
 modelo.add(Dense(1))  # salida de regresión
 
