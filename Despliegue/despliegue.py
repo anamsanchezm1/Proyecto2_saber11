@@ -1131,4 +1131,4 @@ def predecir_colegio(n_clicks, area, bilingue, calendario, caracter, depto, gene
     return resultado_texto, fig, dcc.Markdown(interpretacion)
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=8050, debug=True)
