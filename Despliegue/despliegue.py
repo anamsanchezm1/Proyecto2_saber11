@@ -15,8 +15,20 @@ modelo_clf = joblib.load("modelo_rf.pkl")
 encoder = joblib.load("encoder.pkl")
 clases = ["a-", "a1", "a2", "b+", "b1"]
 
-# Modelo de regresión por características del colegio (Random Forest)
-modelo_colegio = joblib.load("modelo_rf.pkl")
+# Modelo de regresión por características del colegio
+modelo_colegio = keras.models.load_model("modelo_reg_colegio.keras")
+columnas_reg_colegio = joblib.load("columnas_reg_colegio.pkl")
+metricas_reg_colegio = joblib.load("metricas_reg_colegio.pkl")
+
+# IMPORTANTE:
+# El modelo .keras de colegio fue entrenado con variables transformadas a números.
+# Por eso se usa el preprocesador guardado. Si no existe, el código usa un plan B con dummies.
+try:
+    preprocesador_reg_colegio = joblib.load("preprocesador_reg_colegio.pkl")
+except FileNotFoundError:
+    preprocesador_reg_colegio = None
+
+RMSE_COLEGIO = metricas_reg_colegio["RMSE"]
 
 # Modelo de regresión (puntaje global por variables sociales y familiares)
 modelo_reg = keras.models.load_model("modelo_final.keras")
@@ -1007,6 +1019,7 @@ def predecir_colegio(n_clicks, area, bilingue, calendario, caracter, depto, gene
     if n_clicks == 0:
         return "Ingresa valores y presiona el botón", {}, "Aguardando predicción..."
 
+    # Entrada original con las mismas variables categóricas usadas para entrenar
     entrada = pd.DataFrame([{
         "cole_area_ubicacion": area,
         "cole_bilingue": bilingue,
@@ -1019,13 +1032,60 @@ def predecir_colegio(n_clicks, area, bilingue, calendario, caracter, depto, gene
         "cole_sede_principal": sede
     }])
 
-    entrada_encoded = encoder.transform(entrada)
+    # =========================
+    # Preparar entrada para Keras
+    # =========================
+    # Caso recomendado: usar el preprocesador guardado en el entrenamiento.
+    # Esto evita errores de dtype object y de cantidad de columnas.
+    if preprocesador_reg_colegio is not None:
+        entrada_modelo = preprocesador_reg_colegio.transform(entrada)
 
-    # Predecir puntaje global
-    prediccion = modelo_colegio.predict(entrada_encoded)[0]
+        # Si el preprocesador devuelve matriz sparse, la convertimos a arreglo normal.
+        if hasattr(entrada_modelo, "toarray"):
+            entrada_modelo = entrada_modelo.toarray()
 
-    # Calcular probabilidades aproximadas
-    RMSE_COLEGIO = 40.0
+        entrada_modelo = entrada_modelo.astype("float32")
+
+    else:
+        # Plan B: construir manualmente las columnas numéricas.
+        # Solo úsalo si NO tienes preprocesador_reg_colegio.pkl.
+        entrada_modelo = pd.DataFrame(0, index=[0], columns=columnas_reg_colegio)
+
+        valores = {
+            "cole_area_ubicacion": area,
+            "cole_bilingue": bilingue,
+            "cole_calendario": calendario,
+            "cole_caracter": caracter,
+            "cole_depto_ubicacion": depto,
+            "cole_genero": genero,
+            "cole_jornada": jornada,
+            "cole_naturaleza": naturaleza,
+            "cole_sede_principal": sede
+        }
+
+        for variable, valor in valores.items():
+            col_dummy = f"{variable}_{valor}"
+            if col_dummy in entrada_modelo.columns:
+                entrada_modelo.loc[0, col_dummy] = 1
+
+        entrada_modelo = entrada_modelo.apply(pd.to_numeric, errors="coerce").fillna(0)
+        entrada_modelo = entrada_modelo.astype("float32")
+
+    # Validación clara antes de predecir
+    columnas_esperadas = modelo_colegio.input_shape[-1]
+    columnas_recibidas = entrada_modelo.shape[1]
+
+    if columnas_recibidas != columnas_esperadas:
+        mensaje_error = (
+            f"El modelo espera {columnas_esperadas} columnas, pero está recibiendo {columnas_recibidas}. "
+            "Revisa que el archivo preprocesador_reg_colegio.pkl esté en la misma carpeta que este dashboard."
+        )
+        return "Error", {}, mensaje_error
+
+    # Predecir puntaje global con el modelo Keras
+    prediccion = modelo_colegio.predict(entrada_modelo, verbose=0)[0][0]
+
+    # Calcular probabilidades aproximadas usando el RMSE guardado
     probabilidades = calcular_probabilidades(prediccion, RMSE_COLEGIO)
 
     # Crear gráfico
@@ -1069,7 +1129,6 @@ def predecir_colegio(n_clicks, area, bilingue, calendario, caracter, depto, gene
     resultado_texto = f"{prediccion:.0f} puntos"
 
     return resultado_texto, fig, dcc.Markdown(interpretacion)
-
 
 if __name__ == "__main__":
     app.run(debug=True)

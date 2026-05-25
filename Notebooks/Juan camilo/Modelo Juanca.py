@@ -10,7 +10,7 @@ from tensorflow.keras.layers import Dense, Dropout
 from tensorflow.keras.callbacks import EarlyStopping
 from sklearn.linear_model import LinearRegression
 
-ruta = "/Users/juancamilohernandezjacobo/Desktop/saber11_limpio_base.csv"
+ruta = '/Users/anamariasanchezmejia/Downloads/saber11_limpio_base.csv'
 df = pd.read_csv(ruta)
 
 columnas_X = [
@@ -94,3 +94,26 @@ print("MAE:", mae)
 print("MSE:", mse)
 print("RMSE:", rmse)
 print("R2:", r2)
+
+import joblib
+
+# Guardar modelo Keras
+modelo.save("modelo_reg_colegio.keras")
+
+# Guardar preprocesador
+joblib.dump(preprocesador, "preprocesador_reg_colegio.pkl")
+
+# Guardar columnas
+joblib.dump(columnas_X, "columnas_reg_colegio.pkl")
+
+# Guardar métricas
+metricas = {
+    "MAE": mae,
+    "MSE": mse,
+    "RMSE": rmse,
+    "R2": r2
+}
+
+joblib.dump(metricas, "metricas_reg_colegio.pkl")
+
+print("Modelo y artefactos guardados correctamente.")
